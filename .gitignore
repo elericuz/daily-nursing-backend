@@ -1,0 +1,7 @@
+.idea/
+server/var/lib/mysql
+server/var/run/mysqld
+www/asteria/var/
+www/asteria/vendor
+www/asteria/composer.lock
+www/asteria/src/data/

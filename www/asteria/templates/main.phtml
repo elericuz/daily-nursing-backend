@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Alive Project</title>
+        <link href='//fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'>
+        <style>
+            body {
+                margin: 50px 0;
+                padding: 0;
+                width: 100%;
+            	text-align: center;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                color: #aaa;
+                font-size: 18px;
+            }
+
+            h1 {
+                color: #719e40;
+                letter-spacing: -3px;
+                font-family: 'Lato', sans-serif;
+                font-size: 100px;
+                font-weight: 200;
+                margin-bottom: 0;
+            }
+
+            h2 {
+                letter-spacing: 2px;
+                font-family: 'Lato', sans-serif;
+                font-size: 40px;
+                margin-bottom: 0;
+            }            
+            .box-code {
+            	width: 80%;
+            	text-align: left !important;
+            	margin-left: 10%;
+            	word-wrap: break-word;
+            	overflow-y: auto;
+            	overflow-x: hidden;
+            	max-height: 100px;
+            }
+            .xml {
+            	max-height: 400px !important;
+            }
+        </style>
+        <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?autoload=true&skin=sons-of-obsidian"></script>
+    </head>
+    <body>
+        <h2>Json Response</h2>
+		<div class="box-code">
+			<code><?php echo $json; ?></code>
+		</div>
+		<h2>XML Response</h2>
+		<div class="box-code xml">
+			<pre class="prettyprint linenums"><code><?php echo htmlspecialchars($xml); ?></code></pre>
+		</div>
+    </body>
+</html>
