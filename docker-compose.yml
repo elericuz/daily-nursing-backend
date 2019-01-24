@@ -22,7 +22,6 @@ services:
     image: mysql:5.6
     volumes:
     - ./server/var/lib/mysql:/var/lib/mysql
-    - ./server/var/run/mysqld:/var/run/mysqld
     - ./server/root:/root
     ports:
     - "4418:3306"
