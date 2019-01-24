@@ -34,7 +34,7 @@ class Procedure extends Main
             $procedure = $this->_em->getRepository('App\Domain\Entity\Procedimiento')
                 ->find($request->getParam('procedureId'));
         }
-        $procedure->setProcedimiento($request->getParam('procedureId'));
+        $procedure->setProcedimiento($request->getParam('procedure'));
         $this->_em->persist($procedure);
         $this->_em->flush();
 
