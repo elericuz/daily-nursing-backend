@@ -45,6 +45,11 @@ $app->get('/treatments/get/[{treatmentId}]', 'Controller\Treatment:get');
 $app->put('/treatments/add', 'Controller\Treatment:save');
 $app->delete('/treatments/remove/[{treatmentId}]', 'Controller\Treatment:remove');
 
+$app->get('/procedures', 'Controller\Procedure:getAll');
+$app->get('/procedures/get/[{procedureId}]', 'Controller\Procedure:get');
+$app->put('/procedures/add', 'Controller\Procedure:save');
+$app->delete('/procedures/remove/[{procedureId}]', 'Controller\Procedure:remove');
+
 // Catch-all route to serve a 404 Not Found page if none of the routes match
 // NOTE: make sure this route is defined last
 $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function($req, $res) {

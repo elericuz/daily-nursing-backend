@@ -28,6 +28,13 @@ class Procedimiento
      */
     private $procedimiento;
 
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="estado", type="integer", nullable=true)
+     */
+    private $estado = '1';
+
 
 
     /**
@@ -62,5 +69,29 @@ class Procedimiento
     public function getProcedimiento()
     {
         return $this->procedimiento;
+    }
+
+    /**
+     * Set estado
+     *
+     * @param integer $estado
+     *
+     * @return Procedimiento
+     */
+    public function setEstado($estado)
+    {
+        $this->estado = $estado;
+
+        return $this;
+    }
+
+    /**
+     * Get estado
+     *
+     * @return integer
+     */
+    public function getEstado()
+    {
+        return $this->estado;
     }
 }
