@@ -39,6 +39,10 @@ $app->put('/patients/monitor/nursery/{patientId}', 'Controller\Patient:saveNurse
 $app->put('/patients/monitor/balance/{patientId}', 'Controller\Patient:saveBalance');
 $app->put('/patients/monitor/obs/{patientId}', 'Controller\Patient:saveObservation');
 
+$app->get('/kardex/{patientId}', 'Controller\Kardex:getAll');
+$app->get('/kardex/get/[{kardexId}]', 'Controller\Kardex:get');
+$app->put('/kardex/add', 'Controller\Kardex:save');
+$app->delete('/kardex/remove/[{kardexId}]', 'Controller\Kardex:remove');
 
 $app->get('/treatments', 'Controller\Treatment:getAll');
 $app->get('/treatments/get/[{treatmentId}]', 'Controller\Treatment:get');
