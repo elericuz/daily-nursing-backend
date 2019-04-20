@@ -16,15 +16,16 @@ class Kardex extends Main
                 'a.medicina',
                 'a.dosis',
                 'a.fecha',
-                'c.id as via',
+                'c.id as viaId',
                 'a.estado'
             ))
             ->from('App\Domain\Entity\Medicina', 'a')
-            ->innerJoin('App\Domain\Entity\Paciente', 'b', Expr\Join::WITH, $query->expr()->eq('a.cpac', 'b.cpac'))
+            ->innerJoin('App\Domain\Entity\Paciente', 'b', Expr\Join::WITH, $query->expr()->eq('a.idPaciente', 'b.id'))
             ->innerJoin('App\Domain\Entity\MedicinaVia', 'c', Expr\Join::WITH, $query->expr()->eq('a.idVia', 'c.id'))
-            ->where($query->expr()->eq('a.id', $args['medicineId']));
+            ->where($query->expr()->eq('a.id', $args['kardexId']));
 
         $results = $query->getQuery()->getArrayResult();
+        
         return $this->returnResponse($results, 'json');
     }
 
@@ -40,7 +41,7 @@ class Kardex extends Main
         $query->select(
             array(
                 'a.id',
-                'b.cpac',
+                'b.id as cpac',
                 'a.medicina',
                 'a.dosis',
                 'a.fecha',
@@ -48,18 +49,18 @@ class Kardex extends Main
                 'a.estado'
             ))
             ->from('App\Domain\Entity\Medicina', 'a')
-            ->innerJoin('App\Domain\Entity\Paciente', 'b', Expr\Join::WITH, $query->expr()->eq('a.cpac', 'b.cpac'))
+            ->innerJoin('App\Domain\Entity\Paciente', 'b', Expr\Join::WITH, $query->expr()->eq('a.idPaciente', 'b.id'))
             ->innerJoin('App\Domain\Entity\MedicinaVia', 'c', Expr\Join::WITH, $query->expr()->eq('a.idVia', 'c.id'))
             ->where(
                 $query->expr()->andX(
                     $query->expr()->eq('a.estado', 1),
-                    $query->expr()->eq('b.cpac', ':cpac'),
+                    $query->expr()->eq('b.id', ':paciente'),
                     $query->expr()->between('a.fecha', ':startDate', ':endDate')
                 )
             )
             ->setParameters(
                 array(
-                    ':cpac' => $args['patientId'],
+                    ':paciente' => $args['patientId'],
                     ':startDate' => $startDay,
                     ':endDate' => $endDay
                 )
@@ -82,13 +83,13 @@ class Kardex extends Main
 
         if ($request->getParam('medicineId') === null) {
             $medicine = new Medicina();
-            $medicine->setCpac($patientId);
+            $medicine->setIdPaciente($patientId);
         } else {
             $medicine = $this->_em->getRepository('App\Domain\Entity\Medicina')
                 ->findBy(
                     array(
                         'id' => $request->getParam('medicineId'),
-                        'cpac' => $patientId
+                        'paciente' => $patientId
                     )
                 );
         }
@@ -107,8 +108,8 @@ class Kardex extends Main
     }
 
     public function remove($request, $response, $args) {
-        $medicina = $this->_em->getRepository('App\Domain\Entity\Medicina')->find($args['medicineId']);
-        $medicina->setEstatus(0);
+        $medicina = $this->_em->getRepository('App\Domain\Entity\Medicina')->find($args['kardexId']);
+        $medicina->setEstado(0);
         $this->_em->persist($medicina);
         $this->_em->flush();
 

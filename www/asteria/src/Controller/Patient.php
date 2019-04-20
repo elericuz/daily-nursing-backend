@@ -4,6 +4,7 @@ namespace Controller;
 use App\Domain\Entity\AtencionPaciente;
 use App\Domain\Entity\BalanceHidrico;
 use App\Domain\Entity\ObservacionAtencionPaciente;
+use App\Domain\Entity\Paciente;
 use Slim\Http\Response;
 
 class Patient extends Main
@@ -26,7 +27,7 @@ class Patient extends Main
         foreach ($data as $patient) {
             if (strlen(trim($patient['nombres'])) > 0) {
                 $allPatients[] = array(
-                    'id' => trim($patient['cpac']),
+                    'id' => trim($patient['id']),
                     'first_name' => trim($patient['nombres']),
                     'last_name' => trim($patient['apepaterno'])
                 );
@@ -36,13 +37,130 @@ class Patient extends Main
         return $this->returnResponse($allPatients, 'json');
     }
 
+    private function getLastPatientCode() {
+        $query = $this->_em->createQueryBuilder();
+        $query->select('a')
+              ->from('App\Domain\Entity\Paciente', 'a')
+              ->orderBy('a.cpac', 'desc')
+              ->setMaxResults(1);
+
+        $data = $query->getQuery()->getArrayResult();
+
+        $lastCode = 0;
+        if(!empty($data)) {
+            $data = array_shift($data);
+            $lastCode = trim($data['cpac'], 'C');
+            $lastCode = (int) $lastCode;
+        }
+
+        $lastCode++;
+        $patientCode = str_pad($lastCode, 5, 0, STR_PAD_LEFT);
+        $patientCode = $patientCode . "C";
+
+        return $patientCode;
+    }
+
+    private function getPatientAge($birthDate) {
+        $birthDate = new \DateTime($birthDate);
+        $now = new \DateTime();
+        $sinceThen = $birthDate->diff($now);
+
+        return $sinceThen->y;
+    }
+
+    public function savePatient($request, $response, $args) {
+        $birthDate = new \DateTime($request->getParams()['birthDate']);
+        $birthDate = $birthDate->format("Ymd");
+        $startDate = new \DateTime($request->getParams()['startDate']);
+        $startDate = $startDate->format("Ymd");
+
+        $xpaciente = $request->getParam('name') . " " .
+                     $request->getParam('firstLastName') . " " .
+                     $request->getParam('secondLastname');
+
+        $patient = new Paciente();
+        $patient->setCpac($this->getLastPatientCode());
+        $patient->setXpaciente(trim($xpaciente));
+        $patient->setNombres($request->getParam('name'));
+        $patient->setApepaterno($request->getParam('firstLastName'));
+        $patient->setApematerno($request->getParam('secondLastName'));
+        $patient->setFechanace(new \DateTime($birthDate));
+        $patient->setEdad($this->getPatientAge($request->getParams()['birthDate']));
+        $patient->setEmail($request->getParam('email'));
+        $patient->setDni($request->getParam('dni'));
+        $patient->setSexo($request->getParam('sex'));
+        $patient->setTelefono($request->getParam('landLine'));
+        $patient->setCelular($request->getParam('mobileLine'));
+        $patient->setDireccion($request->getParam('address'));
+        $patient->setMedcon($request->getParam('doctor'));
+        $patient->setFingreso(new \DateTime($startDate));
+        $patient->setEstado("A");
+        $patient->setCsede("001");
+        $patient->setFchcrea(new \DateTime('now'));
+
+        $this->_em->persist($patient);
+        $this->_em->flush();
+
+        $result = array(
+            'message' => 'Se ha creado correctamente al paciente'
+        );
+
+        return $this->returnResponse($result, 'json');
+    }
+
+    public function updatePatient($request, $response, $args) {
+        $birthDate = new \DateTime($request->getParams()['birthDate']);
+        $birthDate = $birthDate->format("Ymd");
+        $startDate = new \DateTime($request->getParams()['startDate']);
+        $startDate = $startDate->format("Ymd");
+
+        $xpaciente = $request->getParam('name') . " " .
+            $request->getParam('firstLastName') . " " .
+            $request->getParam('secondLastname');
+
+        $patient = $this->_em->getRepository('App\Domain\Entity\Paciente')
+                        ->find($request->getParam('id'));
+        if ($patient instanceof Paciente) {
+            $patient->setXpaciente(trim($xpaciente));
+            $patient->setNombres($request->getParam('name'));
+            $patient->setApepaterno($request->getParam('firstLastName'));
+            $patient->setApematerno($request->getParam('secondLastName'));
+            $patient->setFechanace(new \DateTime($birthDate));
+            $patient->setEdad($this->getPatientAge($request->getParams()['birthDate']));
+            $patient->setEmail($request->getParam('email'));
+            $patient->setDni($request->getParam('dni'));
+            $patient->setSexo($request->getParam('sex'));
+            $patient->setTelefono($request->getParam('landLine'));
+            $patient->setCelular($request->getParam('mobileLine'));
+            $patient->setDireccion($request->getParam('address'));
+            $patient->setMedcon($request->getParam('doctor'));
+            $patient->setFingreso(new \DateTime($startDate));
+            $patient->setEstado("A");
+            $patient->setCsede("001");
+            $patient->setFchcrea(new \DateTime('now'));
+
+            $this->_em->persist($patient);
+            $this->_em->flush();
+
+            $result = array(
+                'message' => 'Se ha creado correctamente al paciente'
+            );
+        } else {
+            $result = array(
+                'message' => 'No se ha podido actualizar al paciente'
+            );
+        }
+
+        return $this->returnResponse($result, 'json');
+    }
+
     public function getProfile($request, $response, $args)
     {
         $query = $this->_em->createQueryBuilder();
         $query->select('a')
               ->from('App\Domain\Entity\Paciente', 'a')
-              ->where($query->expr()->eq('a.cpac', ':cpac'))
-              ->setParameter(':cpac', $args['patientId']);
+              ->where($query->expr()->eq('a.id', ':patient'))
+              ->setParameter(':patient', $args['patientId']);
 
         $results = $query->getQuery()->getArrayResult();
         return $this->returnResponse($results, 'json');
@@ -64,13 +182,13 @@ class Patient extends Main
                       $query->expr()->andX(
                           $query->expr()->eq('a.fecha', ':fecha'),
                           $query->expr()->eq('a.idProcedimiento', ':procedimiento'),
-                          $query->expr()->eq('a.cpac', ':cpac')
+                          $query->expr()->eq('a.idPaciente', ':paciente')
                       )
                   )
                   ->setParameters(array(
                       ':fecha' => new \DateTime($currentDay),
                       ':procedimiento' => $procedure->getId(),
-                      ':cpac' => $args['patientId']
+                      ':paciente' => $args['patientId']
                   ));
 
             $results = $query->getQuery()->getArrayResult();
@@ -127,13 +245,13 @@ class Patient extends Main
                       $query->expr()->andX(
                           $query->expr()->eq('a.fecha', ':fecha'),
                           $query->expr()->eq('a.idTipoTratamiento', ':tratamiento'),
-                          $query->expr()->eq('a.cpac', ':cpac')
+                          $query->expr()->eq('a.idPaciente', ':paciente')
                       )
                   )
                   ->setParameters(array(
                       ':fecha' => new \DateTime($currentDay),
                       ':tratamiento' => $value->getId(),
-                      ':cpac' => $args['patientId']
+                      ':paciente' => $args['patientId']
                   ));
 
             $results = $query->getQuery()->getArrayResult();
@@ -166,13 +284,13 @@ class Patient extends Main
                       $query->expr()->andX(
                           $query->expr()->eq('a.fecha', ':fecha'),
                           $query->expr()->eq('a.idTipoTratamiento', ':tratamiento'),
-                          $query->expr()->eq('a.cpac', ':cpac')
+                          $query->expr()->eq('a.idPaciente', ':paciente')
                       )
                   )
                   ->setParameters(array(
                       ':fecha' => new \DateTime($currentDay),
                       ':tratamiento' => $value->getId(),
-                      ':cpac' => $args['patientId']
+                      ':paciente' => $args['patientId']
                   ));
 
             $results = $query->getQuery()->getArrayResult();
@@ -213,13 +331,13 @@ class Patient extends Main
               ->from('App\Domain\Entity\ObservacionAtencionPaciente', 'a')
               ->where(
                   $query->expr()->andX(
-                      $query->expr()->eq('a.cpac', ':cpac'),
+                      $query->expr()->eq('a.idPaciente', ':paciente'),
                       $query->expr()->eq('a.turno', ':turno'),
                       $query->expr()->eq('a.fecha', ':fecha')
                   )
               )
               ->setParameters(array(
-                  ':cpac' => $args['patientId'],
+                  ':paciente' => $args['patientId'],
                   ':turno' => 1,
                   ':fecha' => new \DateTime($currentDay)
               ));
@@ -238,13 +356,13 @@ class Patient extends Main
               ->from('App\Domain\Entity\ObservacionAtencionPaciente', 'a')
               ->where(
                   $query->expr()->andX(
-                      $query->expr()->eq('a.cpac', ':cpac'),
+                      $query->expr()->eq('a.idPaciente', ':paciente'),
                       $query->expr()->eq('a.turno', ':turno'),
                       $query->expr()->eq('a.fecha', ':fecha')
                   )
               )
               ->setParameters(array(
-                  ':cpac' => $args['patientId'],
+                  ':paciente' => $args['patientId'],
                   ':turno' => 2,
                   ':fecha' => new \DateTime($currentDay)
               ));
@@ -263,12 +381,13 @@ class Patient extends Main
 
     public function saveNurseMonitoring($request, $response, $args) {
         $patient = $this->_em->getRepository('App\Domain\Entity\Paciente')
-                             ->find($request->getParam('patientId'));
+                             ->findOneByCpac($request->getParam('patientId'));
+
         $procedure = $this->_em->getRepository('App\Domain\Entity\Procedimiento')
                                ->find($request->getParam('procedure'));
 
         $attemp = new AtencionPaciente();
-        $attemp->setCpac($patient);
+        $attemp->setIdPaciente($patient);
         $attemp->setIdProcedimiento($procedure);
         $attemp->setFecha(new \DateTime($request->getParam('date')));
         $attemp->setHora($request->getParam('hour'));
@@ -290,7 +409,7 @@ class Patient extends Main
             ->find($request->getParam('treatment'));
 
         $balance = new BalanceHidrico();
-        $balance->setCpac($patient);
+        $balance->setIdPaciente($patient);
         $balance->setIdTipoTratamiento($treatmentType);
         $balance->setTipo($treatmentType->getTipo());
         $balance->setFecha(new \DateTime($request->getParam('date')));
@@ -311,7 +430,7 @@ class Patient extends Main
             ->find($request->getParam('patientId'));
 
         $obs = new ObservacionAtencionPaciente();
-        $obs->setCpac($patient);
+        $obs->setIdPaciente($patient);
         $obs->setTurno($request->getParam('turn'));
         $obs->setFecha(new \DateTime($request->getParam('date')));
         $obs->setHora(new \DateTime('now'));

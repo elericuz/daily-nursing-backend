@@ -7,19 +7,26 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Paciente
  *
- * @ORM\Table(name="paciente", indexes={@ORM\Index(name="cpac", columns={"cpac"}), @ORM\Index(name="ruc", columns={"ruc"})})
+ * @ORM\Table(name="paciente", uniqueConstraints={@ORM\UniqueConstraint(name="cpac_unique", columns={"cpac"})}, indexes={@ORM\Index(name="cpac", columns={"cpac"}), @ORM\Index(name="ruc", columns={"ruc"})})
  * @ORM\Entity
  */
 class Paciente
 {
     /**
-     * @var string
+     * @var integer
      *
-     * @ORM\Column(name="cpac", type="string", length=6, nullable=false)
+     * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $cpac = '';
+    private $id;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="cpac", type="string", length=6, nullable=false)
+     */
+    private $cpac;
 
     /**
      * @var string
@@ -673,6 +680,30 @@ class Paciente
     private $tipop;
 
 
+
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set cpac
+     *
+     * @param string $cpac
+     *
+     * @return Paciente
+     */
+    public function setCpac($cpac)
+    {
+        $this->cpac = $cpac;
+
+        return $this;
+    }
 
     /**
      * Get cpac

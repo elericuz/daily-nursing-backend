@@ -38,6 +38,9 @@ $app->get('/patients/monitor/observations/[{patientId}]', 'Controller\Patient:ge
 $app->put('/patients/monitor/nursery/{patientId}', 'Controller\Patient:saveNurseMonitoring');
 $app->put('/patients/monitor/balance/{patientId}', 'Controller\Patient:saveBalance');
 $app->put('/patients/monitor/obs/{patientId}', 'Controller\Patient:saveObservation');
+$app->put('/patients/add', 'Controller\Patient:savePatient');
+$app->get('/patients/get/{patientId}', 'Controller\Patient:getProfile');
+$app->put('/patients/update', 'Controller\Patient:updatePatient');
 
 $app->get('/kardex/{patientId}', 'Controller\Kardex:getAll');
 $app->get('/kardex/get/[{kardexId}]', 'Controller\Kardex:get');

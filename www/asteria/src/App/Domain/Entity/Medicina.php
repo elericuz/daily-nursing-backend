@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Medicina
  *
- * @ORM\Table(name="medicina", indexes={@ORM\Index(name="medicina_paciente", columns={"cpac"}), @ORM\Index(name="medicina_via", columns={"id_via"})})
+ * @ORM\Table(name="medicina", indexes={@ORM\Index(name="medicina_via", columns={"id_via"}), @ORM\Index(name="medicina_paciente", columns={"id_paciente"})})
  * @ORM\Entity
  */
 class Medicina
@@ -54,10 +54,10 @@ class Medicina
      *
      * @ORM\ManyToOne(targetEntity="App\Domain\Entity\Paciente")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="cpac", referencedColumnName="cpac")
+     *   @ORM\JoinColumn(name="id_paciente", referencedColumnName="id")
      * })
      */
-    private $cpac;
+    private $idPaciente;
 
     /**
      * @var \App\Domain\Entity\MedicinaVia
@@ -178,27 +178,27 @@ class Medicina
     }
 
     /**
-     * Set cpac
+     * Set idPaciente
      *
-     * @param \App\Domain\Entity\Paciente $cpac
+     * @param \App\Domain\Entity\Paciente $idPaciente
      *
      * @return Medicina
      */
-    public function setCpac(\App\Domain\Entity\Paciente $cpac = null)
+    public function setIdPaciente(\App\Domain\Entity\Paciente $idPaciente = null)
     {
-        $this->cpac = $cpac;
+        $this->idPaciente = $idPaciente;
 
         return $this;
     }
 
     /**
-     * Get cpac
+     * Get idPaciente
      *
      * @return \App\Domain\Entity\Paciente
      */
-    public function getCpac()
+    public function getIdPaciente()
     {
-        return $this->cpac;
+        return $this->idPaciente;
     }
 
     /**

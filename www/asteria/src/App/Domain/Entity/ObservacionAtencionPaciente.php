@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * ObservacionAtencionPaciente
  *
- * @ORM\Table(name="observacion_atencion_paciente", indexes={@ORM\Index(name="observacion_paciente", columns={"cpac"})})
+ * @ORM\Table(name="observacion_atencion_paciente", indexes={@ORM\Index(name="observacion_paciente", columns={"id_paciente"})})
  * @ORM\Entity
  */
 class ObservacionAtencionPaciente
@@ -38,6 +38,13 @@ class ObservacionAtencionPaciente
     /**
      * @var \DateTime
      *
+     * @ORM\Column(name="hora_ocurrencia", type="datetime", nullable=true)
+     */
+    private $horaOcurrencia;
+
+    /**
+     * @var \DateTime
+     *
      * @ORM\Column(name="fecha", type="date", nullable=true)
      */
     private $fecha;
@@ -54,10 +61,10 @@ class ObservacionAtencionPaciente
      *
      * @ORM\ManyToOne(targetEntity="App\Domain\Entity\Paciente")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="cpac", referencedColumnName="cpac")
+     *   @ORM\JoinColumn(name="id_paciente", referencedColumnName="id")
      * })
      */
-    private $cpac;
+    private $idPaciente;
 
 
 
@@ -120,6 +127,30 @@ class ObservacionAtencionPaciente
     }
 
     /**
+     * Set horaOcurrencia
+     *
+     * @param \DateTime $horaOcurrencia
+     *
+     * @return ObservacionAtencionPaciente
+     */
+    public function setHoraOcurrencia($horaOcurrencia)
+    {
+        $this->horaOcurrencia = $horaOcurrencia;
+
+        return $this;
+    }
+
+    /**
+     * Get horaOcurrencia
+     *
+     * @return \DateTime
+     */
+    public function getHoraOcurrencia()
+    {
+        return $this->horaOcurrencia;
+    }
+
+    /**
      * Set fecha
      *
      * @param \DateTime $fecha
@@ -168,26 +199,26 @@ class ObservacionAtencionPaciente
     }
 
     /**
-     * Set cpac
+     * Set idPaciente
      *
-     * @param \App\Domain\Entity\Paciente $cpac
+     * @param \App\Domain\Entity\Paciente $idPaciente
      *
      * @return ObservacionAtencionPaciente
      */
-    public function setCpac(\App\Domain\Entity\Paciente $cpac = null)
+    public function setIdPaciente(\App\Domain\Entity\Paciente $idPaciente = null)
     {
-        $this->cpac = $cpac;
+        $this->idPaciente = $idPaciente;
 
         return $this;
     }
 
     /**
-     * Get cpac
+     * Get idPaciente
      *
      * @return \App\Domain\Entity\Paciente
      */
-    public function getCpac()
+    public function getIdPaciente()
     {
-        return $this->cpac;
+        return $this->idPaciente;
     }
 }
