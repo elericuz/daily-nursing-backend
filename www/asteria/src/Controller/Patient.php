@@ -381,7 +381,7 @@ class Patient extends Main
 
     public function saveNurseMonitoring($request, $response, $args) {
         $patient = $this->_em->getRepository('App\Domain\Entity\Paciente')
-                             ->findOneByCpac($request->getParam('patientId'));
+                             ->find($request->getParam('patientId'));
 
         $procedure = $this->_em->getRepository('App\Domain\Entity\Procedimiento')
                                ->find($request->getParam('procedure'));

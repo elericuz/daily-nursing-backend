@@ -25,7 +25,7 @@ class Kardex extends Main
             ->where($query->expr()->eq('a.id', $args['kardexId']));
 
         $results = $query->getQuery()->getArrayResult();
-        
+
         return $this->returnResponse($results, 'json');
     }
 
