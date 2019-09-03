@@ -3,6 +3,7 @@ namespace Controller;
 
 use App\Domain\Entity\AtencionPaciente;
 use App\Domain\Entity\BalanceHidrico;
+use App\Domain\Entity\BalanceHidricoTotal;
 use App\Domain\Entity\ObservacionAtencionPaciente;
 use App\Domain\Entity\Paciente;
 use Slim\Http\Response;
@@ -237,6 +238,13 @@ class Patient extends Main
         $outcome = $this->_em->getRepository('\App\Domain\Entity\TipoTratamiento')
                              ->findByTipo(2);
 
+        $subTotalVIncome = $subTotalVOutcome = array(
+            '8am2pm' => 0,
+            '2pm8pm' => 0,
+            '8pm2am' => 0,
+            '2am8am' => 0,
+        );
+
         foreach($income as $value) {
             $query = $this->_em->createQueryBuilder();
             $query->select('a')
@@ -248,6 +256,8 @@ class Patient extends Main
                           $query->expr()->eq('a.idPaciente', ':paciente')
                       )
                   )
+                  ->groupBy('a.idTipoTratamiento', 'a.hora')
+                  ->orderBy('a.id', 'desc')
                   ->setParameters(array(
                       ':fecha' => new \DateTime($currentDay),
                       ':tratamiento' => $value->getId(),
@@ -262,17 +272,21 @@ class Patient extends Main
                 '8pm2am' => array(),
                 '2am8am' => array(),
             );
+            $totalH = 0;
             foreach ($results as $val) {
                 $turns[$val['hora']] = array(
                     'hour' => $val['hora'],
                     'value' => $val['valor']
                 );
+                $totalH += $val['valor'];
+                $subTotalVIncome[$val['hora']] += $val['valor'];
             }
 
             $incomeTreatement[] = array(
                 'id' => $value->getId(),
                 'treatement' => $value->getTratamiento(),
-                'turns' => $turns
+                'turns' => $turns,
+                'subTotal' => $totalH
             );
         }
 
@@ -301,22 +315,30 @@ class Patient extends Main
                 '8pm2am' => array(),
                 '2am8am' => array(),
             );
+            $totalH = 0;
             foreach ($results as $val) {
                 $turns[$val['hora']] = array(
                     'hour' => $val['hora'],
                     'value' => $val['valor']
                 );
+                $totalH += $val['valor'];
+                $subTotalVOutcome[$val['hora']] += $val['valor'];
             }
 
             $outcomeTreatement[] = array(
                 'id' => $value->getId(),
                 'treatement' => $value->getTratamiento(),
-                'turns' => $turns
+                'turns' => $turns,
+                'subTotal' => $totalH
             );
         }
 
 
-        return $this->returnResponse(array('income' => $incomeTreatement, 'outcome' => $outcomeTreatement), 'json');
+        return $this->returnResponse(array(
+            'income' => $incomeTreatement,
+            'outcome' => $outcomeTreatement,
+            'subTotalVIncome' => $subTotalVIncome,
+            'subTotalVOutcome' => $subTotalVOutcome), 'json');
     }
 
     public function getObservations($request, $response, $args) {
@@ -403,6 +425,9 @@ class Patient extends Main
     }
 
     public function saveBalance($request, $response, $args) {
+        $currentDay = new \DateTime($request->getParam('date'));
+        $currentDay = $currentDay->format("Ymd");
+
         $patient = $this->_em->getRepository('App\Domain\Entity\Paciente')
             ->find($request->getParam('patientId'));
         $treatmentType = $this->_em->getRepository('App\Domain\Entity\TipoTratamiento')
@@ -412,14 +437,53 @@ class Patient extends Main
         $balance->setIdPaciente($patient);
         $balance->setIdTipoTratamiento($treatmentType);
         $balance->setTipo($treatmentType->getTipo());
-        $balance->setFecha(new \DateTime($request->getParam('date')));
+        $balance->setFecha(new \DateTime($currentDay));
         $balance->setHora($request->getParam('hour'));
         $balance->setValor($request->getParam('value'));
         $this->_em->persist($balance);
         $this->_em->flush();
 
+        $query = $this->_em->createQueryBuilder();
+        $query->select('a')
+            ->from('App\Domain\Entity\BalanceHidrico', 'a')
+            ->where(
+                $query->expr()->andX(
+                    $query->expr()->eq('a.idPaciente', ':paciente'),
+                    $query->expr()->eq('a.tipo', ':tipo'),
+                    $query->expr()->eq('a.hora', ':hora'),
+                    $query->expr()->eq('a.fecha', ':fecha')
+                )
+            )
+            ->groupBy('a.idTipoTratamiento')
+            ->orderBy('a.id', 'desc')
+            ->setParameters(array(
+                ':paciente' => $request->getParam('patientId'),
+                ':tipo' => $treatmentType->getTipo(),
+                ':hora' => $request->getParam('hour'),
+                ':fecha' => new \DateTime($currentDay)
+            ));
+        $results = $query->getQuery()->getArrayResult();
+        $subtotal = 0;
+        foreach($results as $value) {
+            $subtotal += $value['valor'];
+        }
+
+        $balanceHidricoTotal = new BalanceHidricoTotal();
+        $balanceHidricoTotal->setIdPaciente($patient);
+        $balanceHidricoTotal->setSubtotal(1);
+        $balanceHidricoTotal->setFecha(new \DateTime($request->getParam('date')));
+        $balanceHidricoTotal->setHora($request->getParam('hour'));
+        $balanceHidricoTotal->setTotal($subtotal);
+        $this->_em->persist($balanceHidricoTotal);
+        $this->_em->flush();
+
         $result = array(
-            'message' => 'Se ha guardado correctamente el balance'
+            'message' => 'Se ha guardado correctamente el balance',
+            'subTotal' => array(
+                'hora' => $request->getParam('hour'),
+                'fecha' => new \DateTime($currentDay),
+                'subtotal' => $subtotal
+            )
         );
 
         return $this->returnResponse($result, 'json');
